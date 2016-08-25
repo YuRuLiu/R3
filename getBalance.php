@@ -1,5 +1,6 @@
 <?php
 require_once("Database.php");
+header("Content-Type:text/html; charset=utf-8");
 
 $db = new Database();
 $userName = $_GET['username'];
@@ -12,7 +13,6 @@ $resSelectBalance = $db -> select($sqlSelectBalance);
 
 $success = array(
     "result" => "true",
-    "username" => $resSelectBalance[0]['userName'],
     "balance" => $resSelectBalance[0]['balance']
 );
 
