@@ -46,6 +46,23 @@ if ($type == "IN") {
 
 //轉出
 if ($type == "OUT") {
+    //判斷餘額不足
+    $sqlSelectUser = "SELECT `balance`
+                      FROM `user`
+                      WHERE `userName` = '$userName'";
+    $resSelectUser = $db -> select($sqlSelectUser);
+    $balance = $resSelectUser[0]['balance'];
+
+    $InsufficientBalance = array(
+        "result" => "false",
+        "message" => "Insufficient balance"
+    );
+
+    if ($balance < $amount) {
+        echo json_encode($InsufficientBalance);
+        exit;
+    }
+
     try{
         $db->transaction();
         $sqlSelectUser = "SELECT `userName`, `balance`
