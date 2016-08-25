@@ -8,19 +8,19 @@ ex. request - https://lab1-betsy-liu.c9users.io/R3/getBalance.php?username=betsy
 
 reponse - {"result":"true","username":"betsy","balance":"300"}
 
-1. 新增帳號
+1.新增帳號
 
 > api名稱 - addUser
 
 > 參數1 - username(帳號)
 
-2. 取得餘額
+2.取得餘額
 
 > api名稱 - getBalance
 
 > 參數1 - (string)username(帳號)
 
-3. 轉帳
+3.轉帳
 
 > api名稱 - transfer
 
@@ -32,7 +32,7 @@ reponse - {"result":"true","username":"betsy","balance":"300"}
 
 > 參數4 - (int)amount(轉帳金額)
 
-4. 轉帳確認
+4.轉帳確認
 
 > api名稱 - checkTransfer
 
