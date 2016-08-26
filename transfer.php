@@ -1,5 +1,6 @@
 <?php
 require_once("Database.php");
+header("Content-Type:text/html; charset=utf-8");
 
 $db = new Database();
 $userName = $_GET['username'];
@@ -7,24 +8,80 @@ $transId = $_GET['transid'];
 $type = $_GET['type'];
 $amount = $_GET['amount'];
 
+if ($userName == null || $transId == null || $type == null || $amount == null) {
+    $parameterFail = array(
+        "result" => "false",
+        "message" => "quantity of parameter is wrong"
+    );
+
+    echo json_encode($parameterFail);
+    exit;
+}
+
+$sqlSelectUser = "SELECT `userName`
+                  FROM `user`
+                  WHERE `userName` = '$userName'";
+$resSelectUser = $db -> select($sqlSelectUser);
+
+if ($resSelectUser[0]['userName'] == "") {
+    $userFail = array(
+        "result" => "false",
+        "message" => "this user does not exist"
+    );
+
+    echo json_encode($userFail);
+    exit;
+}
+
+if (!is_numeric($transId) || $transId < 0) {
+    $transidFail = array(
+        "result" => "false",
+        "message" => "transid should be a positive integer"
+    );
+
+    echo json_encode($transidFail);
+    exit;
+}
+
+if (!is_numeric($amount) || $amount < 0) {
+    $amountFail = array(
+        "result" => "false",
+        "message" => "amount should be a positive integer"
+    );
+
+    echo json_encode($amountFail);
+    exit;
+}
+
+if ($type != "IN" && $type != "OUT") {
+    $typeFail = array(
+        "result" => "false",
+        "message" => "type shoule be IN or OUT"
+    );
+
+    echo json_encode($typeFail);
+    exit;
+}
+
 //判斷transid是否重複
 $sqlSelectTransId = "SELECT `userName`, `transId`
                      FROM `detail`
                      WHERE (`userName` = '$userName' AND `transId` = '$transId')";
 $resSelectTransId = $db -> select($sqlSelectTransId);
 
-$TransIdRepeat = array(
-    "result" => "false",
-    "message" => "Transid repeat"
-);
 
 if ($resSelectTransId[0]['transId'] != "") {
+    $TransIdRepeat = array(
+        "result" => "false",
+        "message" => "Transid repeat"
+    );
+
     echo json_encode($TransIdRepeat);
     exit;
 }
 
 //轉入
-if ($type == "IN") {
+if ($type === "IN") {
     $sqlSelectUser = "SELECT `userName`, `balance`
                       FROM `user`
                       WHERE `userName` = '$userName'";
@@ -45,7 +102,7 @@ if ($type == "IN") {
 }
 
 //轉出
-if ($type == "OUT") {
+if ($type === "OUT") {
     //判斷餘額不足
     $sqlSelectUser = "SELECT `balance`
                       FROM `user`
@@ -87,22 +144,23 @@ if ($type == "OUT") {
         $db->commit();
     } catch (Exception $e) {
         $this->rollback();
+
+        $fail = array(
+            "result" => "false",
+            "message" => "transfer is fail"
+        );
+
+        echo json_encode($fail);
     }
 }
 
-//判斷轉帳是否成功，並顯示餘額
-$sqlSelectUser = "SELECT `userName`, `balance`
-                  FROM `user`
-                  WHERE `userName` = '$userName'";
-$resSelectUser = $db -> select($sqlSelectUser);
-$balance = $resSelectUser[0]['balance'];
-
-$success = array(
-    "result" => "true",
-    "balance" => $balance,
-    "message" => "transfer is success"
-);
-
+//判斷轉帳是否成功
 if ($resInsertTransfer == true && $resUpdateBalance == true) {
+    $success = array(
+        "result" => "true",
+        "balance" => $balance,
+        "message" => "transfer is success"
+    );
+
     echo json_encode($success);
 }
