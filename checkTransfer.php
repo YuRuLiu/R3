@@ -2,9 +2,10 @@
 require_once("Database.php");
 header("Content-Type:text/html; charset=utf-8");
 
-$db = new Database();
 $userName = $_GET['username'];
 $transId = $_GET['transid'];
+
+$db = new Database();
 
 if ($userName == null || $transId == null) {
     $parameterFail = array(
