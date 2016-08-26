@@ -81,18 +81,6 @@ if ($resSelectTransId[0]['transId'] != "") {
     exit;
 }
 
-//判斷餘額不足
-$balance = $resSelectUser[0]['balance'];
-if ($balance < $amount) {
-    $InsufficientBalance = array(
-        "result" => "false",
-        "message" => "Insufficient balance"
-    );
-
-    echo json_encode($InsufficientBalance);
-    exit;
-}
-
 //轉入
 if ($type === "IN") {
     $sqlSelectUser = "SELECT `userName`, `balance`
@@ -116,37 +104,52 @@ if ($type === "IN") {
 
 //轉出
 if ($type === "OUT") {
-    try{
-        $db->transaction();
-        $sqlSelectUser = "SELECT `userName`, `balance`
-                          FROM `user`
-                          WHERE `userName` = '$userName' LOCK IN SHARE MODE";
-        $resSelectUser = $db -> select($sqlSelectUser);
-        $name = $resSelectUser[0]['userName'];
-        $balance = $resSelectUser[0]['balance'];
 
-        if ($balance >= $amount) {
-            $balance = $balance - $amount;
-            $sqlInsertTransfer = "INSERT INTO `detail`(`userName`, `transId`, `moneyOut`, `balance`)
-                                  VALUES ('$name', '$transId', $amount, '$balance')";
-            $resInsertTransfer = $db -> insert($sqlInsertTransfer);
-
-            $sqlUpdateBalance = "UPDATE `user`
-                                 SET `balance`= '$balance'
-                                 WHERE `userName` = '$userName'";
-            $resUpdateBalance = $db -> update($sqlUpdateBalance);
-        }
-
-        $db->commit();
-    } catch (Exception $e) {
-        $this->rollback();
-
-        $fail = array(
+    //判斷餘額不足
+    $balance = $resSelectUser[0]['balance'];
+    if ($balance < $amount) {
+        $InsufficientBalance = array(
             "result" => "false",
-            "message" => "transfer is fail"
+            "message" => "Insufficient balance"
         );
 
-        echo json_encode($fail);
+        echo json_encode($InsufficientBalance);
+        exit;
+    }
+
+    if ($balance >= $amount) {
+        try{
+            $db->transaction();
+            $sqlSelectUser = "SELECT `userName`, `balance`
+                              FROM `user`
+                              WHERE `userName` = '$userName' LOCK IN SHARE MODE";
+            $resSelectUser = $db -> select($sqlSelectUser);
+            $name = $resSelectUser[0]['userName'];
+            $balance = $resSelectUser[0]['balance'];
+
+            if ($balance >= $amount) {
+                $balance = $balance - $amount;
+                $sqlInsertTransfer = "INSERT INTO `detail`(`userName`, `transId`, `moneyOut`, `balance`)
+                                      VALUES ('$name', '$transId', $amount, '$balance')";
+                $resInsertTransfer = $db -> insert($sqlInsertTransfer);
+
+                $sqlUpdateBalance = "UPDATE `user`
+                                     SET `balance`= '$balance'
+                                     WHERE `userName` = '$userName'";
+                $resUpdateBalance = $db -> update($sqlUpdateBalance);
+            }
+
+            $db->commit();
+        } catch (Exception $e) {
+            $this->rollback();
+
+            $fail = array(
+                "result" => "false",
+                "message" => "transfer is fail"
+            );
+
+            echo json_encode($fail);
+        }
     }
 }
 
