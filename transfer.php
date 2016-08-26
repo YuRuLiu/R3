@@ -2,11 +2,12 @@
 require_once("Database.php");
 header("Content-Type:text/html; charset=utf-8");
 
-$db = new Database();
 $userName = $_GET['username'];
 $transId = $_GET['transid'];
 $type = $_GET['type'];
 $amount = $_GET['amount'];
+
+$db = new Database();
 
 if ($userName == null || $transId == null || $type == null || $amount == null) {
     $parameterFail = array(
@@ -18,7 +19,7 @@ if ($userName == null || $transId == null || $type == null || $amount == null) {
     exit;
 }
 
-$sqlSelectUser = "SELECT `userName`
+$sqlSelectUser = "SELECT `userName`, `balance`
                   FROM `user`
                   WHERE `userName` = '$userName'";
 $resSelectUser = $db -> select($sqlSelectUser);
@@ -80,6 +81,18 @@ if ($resSelectTransId[0]['transId'] != "") {
     exit;
 }
 
+//判斷餘額不足
+$balance = $resSelectUser[0]['balance'];
+if ($balance < $amount) {
+    $InsufficientBalance = array(
+        "result" => "false",
+        "message" => "Insufficient balance"
+    );
+
+    echo json_encode($InsufficientBalance);
+    exit;
+}
+
 //轉入
 if ($type === "IN") {
     $sqlSelectUser = "SELECT `userName`, `balance`
@@ -103,23 +116,6 @@ if ($type === "IN") {
 
 //轉出
 if ($type === "OUT") {
-    //判斷餘額不足
-    $sqlSelectUser = "SELECT `balance`
-                      FROM `user`
-                      WHERE `userName` = '$userName'";
-    $resSelectUser = $db -> select($sqlSelectUser);
-    $balance = $resSelectUser[0]['balance'];
-
-    $InsufficientBalance = array(
-        "result" => "false",
-        "message" => "Insufficient balance"
-    );
-
-    if ($balance < $amount) {
-        echo json_encode($InsufficientBalance);
-        exit;
-    }
-
     try{
         $db->transaction();
         $sqlSelectUser = "SELECT `userName`, `balance`
